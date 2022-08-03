@@ -5,27 +5,22 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from apps.orders.models import Order
-from apps.orders.service.parse.exceptions import CredentialsFileDoesNotExist
 from apps.orders.service.repositories.currency_repository.base import \
     BaseCurrencyRepository
 from apps.orders.service.repositories.currency_repository.currencies import \
     Currency
 from apps.orders.service.usecases.order import get_all_orders, get_order_by_id
 from apps.orders.utils.file_utils import check_if_file_exist, write_in_file
-from django.conf import settings
-from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import Resource, build
-from googleapiclient.errors import HttpError
-from pyparsing import delimited_list
-from requests import delete
+from googleapiclient.discovery import build
 
 from .base import BaseParser
 
 
 @dataclass
 class GoogleSheetRow:
+    """Typed data from Google Sheet's row"""
     id: int
     order_id: str
     cost_dollars: float
@@ -34,6 +29,15 @@ class GoogleSheetRow:
 
 
 def map_data_to_row(data: Iterable[Any], rubles_per_dollar: float) -> GoogleSheetRow:
+    """Map google sheets data to row
+
+    Args:
+        data (Iterable[Any]): Data
+        rubles_per_dollar (float): rubles per one dollar
+
+    Returns:
+        GoogleSheetRow
+    """
     cost_in_dollars = float(data[2])
     return GoogleSheetRow(
         id=int(data[0]),
@@ -45,6 +49,14 @@ def map_data_to_row(data: Iterable[Any], rubles_per_dollar: float) -> GoogleShee
 
 
 def map_row_to_model(row: GoogleSheetRow) -> Order:
+    """Map GoogleSheetRow to Order object
+
+    Args:
+        row (GoogleSheetRow): Data from Google Sheet
+
+    Returns:
+        Order: Order object
+    """
     return Order(
         id=row.id,
         order_id=row.order_id,
@@ -73,10 +85,9 @@ class GoogleSheetsParser(BaseParser):
         self.repository = repository
         self.rows: Iterable[GoogleSheetRow] = None
         self.rubles_per_dollar: float = None
-        assert self.repository.currency != Currency.DOLLAR, (
-            "The repository class should receive a number of rubles only ",
+        assert self.repository.currency == Currency.DOLLAR, \
+            "The repository class should receive a number of rubles only " + \
             "for a dollar. In the context of Google Sheets Parser"
-        )
 
     def set_up(self) -> None:
         self._fetch_current_rubles_course()
@@ -114,22 +125,23 @@ class GoogleSheetsParser(BaseParser):
     def parse(self) -> None:
         required_fields = [self.rows, self.rubles_per_dollar]
         assert all(elem is not None for elem in required_fields), \
-            f"Some of required fields, ${required_fields} are None, you must call the set_up method first"
-        list(map(self.parse_single_row, self.rows))
+            f"Some of required fields, ${required_fields} are None, " + \
+            "you must call the set_up method first"
+        list(map(self._parse_single_row, self.rows))
         row_ids = list(map(lambda item: item.id, self.rows))
         orders = get_all_orders().exclude(id__in=row_ids)
         orders.delete()
 
-    def parse_single_row(self, row: GoogleSheetRow) -> Order:
+    def _parse_single_row(self, row: GoogleSheetRow) -> Order:
         order = get_order_by_id(row.id)
-        return self.create_order(row) if order is None else self.update_order(order, row)
+        return self._create_order(row) if order is None else self._update_order(order, row)
 
-    def create_order(self, row: GoogleSheetRow) -> Order:
+    def _create_order(self, row: GoogleSheetRow) -> Order:
         result = map_row_to_model(row)
         result.save()
         return result
 
-    def update_order(self, order: Order, row: GoogleSheetRow) -> Order:
+    def _update_order(self, order: Order, row: GoogleSheetRow) -> Order:
         order.order_id = row.order_id
         order.cost_dollars = row.cost_dollars
         order.cost_rubles = row.cost_rubles
