@@ -72,3 +72,8 @@ def check_if_file_exist(path: Path) -> bool:
 
 def is_file(path: Path) -> bool:
     return Path.is_file(path)
+
+
+def write_in_file(path: Path, body: str) -> None:
+    with open(path, 'w') as file:
+        file.write(body)

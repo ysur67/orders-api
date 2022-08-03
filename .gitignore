@@ -12,3 +12,5 @@ conf/systemd.conf
 venv
 .vscode
 *.sqlite3
+credentials.json
+token.json
