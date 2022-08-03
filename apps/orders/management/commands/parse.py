@@ -14,8 +14,7 @@ class Command(BaseCommand):
 
     def handle(self, *args: Any, **options: Any) -> Optional[str]:
         repository = BankOfRussiaCurrencyRepository(
-            from_currency=Currency.DOLLAR,
-            target_currency=Currency.RUBLE,
+            currency=Currency.DOLLAR,
             url="https://www.cbr.ru/scripts/XML_daily.asp",
             date=datetime.now(),
         )

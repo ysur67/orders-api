@@ -102,7 +102,7 @@ class GoogleSheetsParser(BaseParser):
         ))
 
     def _fetch_current_rubles_course(self) -> None:
-        self.rubles_per_dollar = self.repository.get_currency_value()
+        self.rubles_per_dollar = self.repository.get_amount_of_rubles_per_currency()
 
     def parse(self) -> None:
         required_fields = [self.rows, self.rubles_per_dollar]

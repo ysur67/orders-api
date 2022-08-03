@@ -6,10 +6,9 @@ from apps.orders.service.repositories.currency_repository.currencies import \
 
 class BaseCurrencyRepository(ABC):
 
-    def __init__(self, from_currency: Currency, target_currency: Currency) -> None:
-        self.from_currency = from_currency
-        self.target_currency = target_currency
+    def __init__(self, currency: Currency) -> None:
+        self.currency = currency
 
     @abstractmethod
-    def get_currency_value(self) -> float:
+    def get_amount_of_rubles_per_currency(self) -> float:
         pass

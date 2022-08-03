@@ -11,44 +11,42 @@ from .exceptions import (BadResponseFromCurrencyAPIException,
                          NoSuchCurrencyInResponseException)
 
 
-class BankOfRussiaCurrencyRepository(
-    BaseCurrencyRepository,
-):
-    SUPPORTED_FROM_CURRENCIES = [
+class BankOfRussiaCurrencyRepository(BaseCurrencyRepository):
+
+    SUPPORTED_CURRENCIES = [
         Currency.DOLLAR,
     ]
 
     def __init__(
         self,
-        from_currency: Currency,
-        target_currency: Currency,
+        currency: Currency,
         url: str,
         date: datetime,
     ) -> None:
-        super().__init__(from_currency, target_currency)
+        super().__init__(currency)
         self.url = url
         self.date = date
-        if self.from_currency not in self.SUPPORTED_FROM_CURRENCIES:
+        if self.currency not in self.SUPPORTED_CURRENCIES:
             raise NotImplementedError(
-                f"There is no implementation for currency: {self.from_currency.name}"
+                f"There is no implementation for currency: {self.currency.name}"
             )
 
-    def get_currency_value(self) -> float:
+    def get_amount_of_rubles_per_currency(self) -> float:
         response = requests.get(
             self.url,
             params={"date_req": self.date.strftime("%d/%m/%Y")}
         )
         if not response.status_code == 200:
             raise BadResponseFromCurrencyAPIException()
-        currency_code = currency_to_bank_of_russia_code(self.from_currency)
+        currency_code = currency_to_bank_of_russia_code(self.currency)
         return self._get_value_from_response_by_code(response.text, currency_code)
 
     def _get_value_from_response_by_code(self, xml_body: str, currency_code: str) -> float:
         root: etree._Element = etree.fromstring(
             bytes(xml_body, encoding="windows-1251")
         )
-        valute_elements: Iterable[etree._Element] = root.findall('Valute')
-        single_valute_element = list(filter(
+        valute_elements: Iterable[etree._Element] = root.findall("Valute")
+        single_valute_element = tuple(filter(
             lambda el: el.get("ID") == currency_code,
             valute_elements
         ))
