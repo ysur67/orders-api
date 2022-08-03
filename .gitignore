@@ -11,3 +11,4 @@ conf/systemd.conf
 .env
 venv
 .vscode
+*.sqlite3
