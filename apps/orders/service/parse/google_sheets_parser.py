@@ -13,6 +13,7 @@ from apps.orders.service.usecases.order import get_all_orders, get_order_by_id
 from apps.orders.utils.convert_utils import (str_to_date, str_to_float,
                                              str_to_int)
 from apps.orders.utils.file_utils import check_if_file_exist, write_in_file
+from apps.orders.utils.reset_pks import reset_autoincrement_fields
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -94,8 +95,11 @@ class GoogleSheetsParser(BaseParser):
             "you must call the set_up method first"
         map(self._parse_single_row, self.rows)
         row_ids = tuple(map(lambda item: item.id, self.rows))
+        # remove orders that are not presented in current data
         orders = get_all_orders().exclude(id__in=row_ids)
         orders.delete()
+        # reset autoincrement fields to prevent IntegrityErrors from psql.
+        reset_autoincrement_fields([Order])
 
     def _parse_single_row(self, row: GoogleSheetRow) -> Order:
         order = get_order_by_id(row.id)
