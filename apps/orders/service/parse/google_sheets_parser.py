@@ -55,6 +55,8 @@ def map_row_to_model(row: GoogleSheetRow) -> Order:
 
 
 class GoogleSheetsParser(BaseParser):
+    """Order parser from Google Sheets"""
+
     SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
     SAMPLE_SPREADSHEET_ID = '1bSjKMCN-7roNe0apm1E8Z8gIwbgeo448ekBWvot66zo'
     SAMPLE_RANGE_NAME = 'A2:D'
@@ -71,6 +73,10 @@ class GoogleSheetsParser(BaseParser):
         self.repository = repository
         self.rows: Iterable[GoogleSheetRow] = None
         self.rubles_per_dollar: float = None
+        assert self.repository.currency != Currency.DOLLAR, (
+            "The repository class should receive a number of rubles only ",
+            "for a dollar. In the context of Google Sheets Parser"
+        )
 
     def set_up(self) -> None:
         self._fetch_current_rubles_course()
@@ -102,6 +108,7 @@ class GoogleSheetsParser(BaseParser):
         ))
 
     def _fetch_current_rubles_course(self) -> None:
+        """Get the number of rubles per dollar"""
         self.rubles_per_dollar = self.repository.get_amount_of_rubles_per_currency()
 
     def parse(self) -> None:
