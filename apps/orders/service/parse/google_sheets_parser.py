@@ -10,6 +10,8 @@ from apps.orders.service.repositories.currency_repository.base import \
 from apps.orders.service.repositories.currency_repository.currencies import \
     Currency
 from apps.orders.service.usecases.order import get_all_orders, get_order_by_id
+from apps.orders.utils.convert_utils import (str_to_date, str_to_float,
+                                             str_to_int)
 from apps.orders.utils.file_utils import check_if_file_exist, write_in_file
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -26,44 +28,6 @@ class GoogleSheetRow:
     cost_dollars: float
     cost_rubles: float
     delivery_date: date
-
-
-def map_data_to_row(data: Iterable[Any], rubles_per_dollar: float) -> GoogleSheetRow:
-    """Map google sheets data to row
-
-    Args:
-        data (Iterable[Any]): Data
-        rubles_per_dollar (float): rubles per one dollar
-
-    Returns:
-        GoogleSheetRow
-    """
-    cost_in_dollars = float(data[2])
-    return GoogleSheetRow(
-        id=int(data[0]),
-        order_id=data[1],
-        cost_dollars=cost_in_dollars,
-        cost_rubles=cost_in_dollars * rubles_per_dollar,
-        delivery_date=datetime.strptime(data[3], '%d.%m.%Y').date()
-    )
-
-
-def map_row_to_model(row: GoogleSheetRow) -> Order:
-    """Map GoogleSheetRow to Order object
-
-    Args:
-        row (GoogleSheetRow): Data from Google Sheet
-
-    Returns:
-        Order: Order object
-    """
-    return Order(
-        id=row.id,
-        order_id=row.order_id,
-        cost_dollars=row.cost_dollars,
-        cost_rubles=row.cost_rubles,
-        delivery_date=row.delivery_date,
-    )
 
 
 class GoogleSheetsParser(BaseParser):
@@ -93,6 +57,10 @@ class GoogleSheetsParser(BaseParser):
         self._fetch_current_rubles_course()
         self._fetch_rows_from_google_sheets()
 
+    def _fetch_current_rubles_course(self) -> None:
+        """Get the number of rubles per dollar"""
+        self.rubles_per_dollar = self.repository.get_amount_of_rubles_per_currency()
+
     def _fetch_rows_from_google_sheets(self) -> None:
         absolute_token_path = self.token_path.absolute()
         absolute_creds_path = self.creds_path.absolute()
@@ -113,22 +81,19 @@ class GoogleSheetsParser(BaseParser):
             spreadsheetId=self.SAMPLE_SPREADSHEET_ID,
             range=self.SAMPLE_RANGE_NAME
         ).execute()
-        self.rows = list(map(
-            lambda el: map_data_to_row(el, self.rubles_per_dollar),
-            result.get("values", [])
-        ))
-
-    def _fetch_current_rubles_course(self) -> None:
-        """Get the number of rubles per dollar"""
-        self.rubles_per_dollar = self.repository.get_amount_of_rubles_per_currency()
+        self.rows = []
+        for elem in result.get("values", []):
+            row = map_data_to_row(elem, self.rubles_per_dollar)
+            if row is not None:
+                self.rows.append(row)
 
     def parse(self) -> None:
         required_fields = [self.rows, self.rubles_per_dollar]
         assert all(elem is not None for elem in required_fields), \
             f"Some of required fields, ${required_fields} are None, " + \
             "you must call the set_up method first"
-        list(map(self._parse_single_row, self.rows))
-        row_ids = list(map(lambda item: item.id, self.rows))
+        map(self._parse_single_row, self.rows)
+        row_ids = tuple(map(lambda item: item.id, self.rows))
         orders = get_all_orders().exclude(id__in=row_ids)
         orders.delete()
 
@@ -148,3 +113,48 @@ class GoogleSheetsParser(BaseParser):
         order.delivery_date = row.delivery_date
         order.save()
         return order
+
+
+def map_data_to_row(data: Iterable[Any], rubles_per_dollar: float) -> GoogleSheetRow:
+    """Map google sheets data to row
+
+    Args:
+        data (Iterable[Any]): Data
+        rubles_per_dollar (float): rubles per one dollar
+
+    Returns:
+        GoogleSheetRow
+    """
+    if len(data) == 0:
+        return None
+    id_ = str_to_int(data[0])
+    order_id = data[1]
+    cost_in_dollars = str_to_float(data[2])
+    delivery_date = str_to_date(data[3])
+    if any(elem is None for elem in [id_, order_id, cost_in_dollars, delivery_date]):
+        return None
+    return GoogleSheetRow(
+        id=id_,
+        order_id=order_id,
+        cost_dollars=cost_in_dollars,
+        cost_rubles=cost_in_dollars * rubles_per_dollar,
+        delivery_date=delivery_date
+    )
+
+
+def map_row_to_model(row: GoogleSheetRow) -> Order:
+    """Map GoogleSheetRow to Order object
+
+    Args:
+        row (GoogleSheetRow): Data from Google Sheet
+
+    Returns:
+        Order: Order object
+    """
+    return Order(
+        id=row.id,
+        order_id=row.order_id,
+        cost_dollars=row.cost_dollars,
+        cost_rubles=row.cost_rubles,
+        delivery_date=row.delivery_date,
+    )
