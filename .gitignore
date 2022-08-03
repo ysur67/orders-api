@@ -1,0 +1,13 @@
+*.pyc
+.idea
+/static/
+/media/
+settings/local_settings.py
+conf/nginx.conf
+conf/uwsgi.ini
+conf/systemd.conf
+*.sock
+*.pid
+.env
+venv
+.vscode
