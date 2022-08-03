@@ -1,4 +1,0 @@
-
-
-class CredentialsFileDoesNotExist(Exception):
-    pass

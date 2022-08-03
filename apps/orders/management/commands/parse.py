@@ -25,5 +25,3 @@ class Command(BaseCommand):
         )
         parser.set_up()
         parser.parse()
-        # value = repository.get_currency_value()
-        # print(value)

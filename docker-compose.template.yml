@@ -1,0 +1,54 @@
+version: "3.8"
+services:
+
+  db:
+    image: postgres:latest
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - backend
+
+  app:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/code
+      - media:/media
+    depends_on:
+      - db
+    networks:
+      - backend
+
+  redis:
+    image: "redis:latest"
+    hostname: redis
+    ports:
+      - 6379:6379
+    networks:
+      - backend
+
+  celery:
+    build: .
+    command: celery -A project worker -l info
+    volumes:
+      - .:/code
+    links:
+      - redis
+    depends_on:
+      - db
+      - redis
+      - app
+    networks:
+      - backend
+
+networks:
+  backend:
+
+volumes:
+  db-data:
