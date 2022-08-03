@@ -55,8 +55,13 @@ class GoogleSheetsParser(BaseParser):
         super().__init__()
         self.creds_path = creds_path
         self.rows: Iterable[GoogleSheetRow]
+        self.rubles_per_dollar: float
 
     def set_up(self) -> None:
+        self._fetch_rows_from_google_sheets()
+        self._fetch_current_rubles_course()
+
+    def _fetch_rows_from_google_sheets(self) -> None:
         absolute_creds_path = self.creds_path.absolute()
         if not check_if_file_exist(absolute_creds_path):
             raise CredentialsFileDoesNotExist(
@@ -74,18 +79,21 @@ class GoogleSheetsParser(BaseParser):
         ).execute()
         self.rows = map(map_data_to_row, result.get("values", []))
 
+    def _fetch_current_rubles_course(self) -> None:
+        return
+
     def parse(self) -> None:
+        required_fields = [self.rows, self.rubles_per_dollar]
+        assert all(elem is not None for elem in required_fields), \
+            f"Some of required fields, ${required_fields} are None, you must call the set_up method first"
         map(self.parse_single_row, self.rows)
         row_ids = list(map(lambda item: item.id, self.rows))
         orders = get_all_orders().exclude(id__in=row_ids)
         orders.delete()
 
-    def parse_single_row(self, row: GoogleSheetRow) -> None:
-        elem = get_order_by_id(row.id)
-        if elem is None:
-            self.create_order(row)
-            return
-        return self.update_order(elem, row)
+    def parse_single_row(self, row: GoogleSheetRow) -> Order:
+        order = get_order_by_id(row.id)
+        return self.create_order(row) if order is None else self.update_order(order, row)
 
     def create_order(self, row: GoogleSheetRow) -> Order:
         result = map_row_to_model(row)
