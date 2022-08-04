@@ -89,11 +89,10 @@ class ParseOrdersTask(Task):
         bot: BaseBot
     ) -> None:
         now = datetime.now()
+        _get_orders_without_sent_message = await sync_to_async(get_orders_without_sent_message)(receiver.telegram_id,
+                                                                                                date_=now.date())
         orders_without_notifications = await sync_to_async(list)(
-            get_orders_without_sent_message(
-                receiver.telegram_id,
-                date_=now.date()
-            )
+            _get_orders_without_sent_message
         )
         if len(orders_without_notifications) == 0:
             self.logger.info("There are no orders to send...")
