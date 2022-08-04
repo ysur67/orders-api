@@ -92,7 +92,7 @@ class ParseOrdersTask(Task):
         orders_without_notifications = await sync_to_async(list)(
             get_orders_without_sent_message(
                 receiver.telegram_id,
-                date=now.date()
+                date_=now.date()
             )
         )
         text = build_notification_message(orders_without_notifications)
