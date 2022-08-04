@@ -1,0 +1,2 @@
+class BotIsNoneException(Exception):
+    pass

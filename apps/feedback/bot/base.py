@@ -17,3 +17,7 @@ class BaseBot(ABC):
             message (SingleMessage): Message to send.
             user_id (int): User id from messenger.
         """
+
+    @abstractmethod
+    async def close(self) -> None:
+        """Close the bot connection."""

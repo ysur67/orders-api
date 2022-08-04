@@ -28,12 +28,14 @@ class OrderNotification(models.Model):
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
-        verbose_name="Заказ"
+        verbose_name="Заказ",
+        related_name="notifications"
     )
     receiver = models.ForeignKey(
         NotificationsReceiver,
         on_delete=models.CASCADE,
-        verbose_name="Получатель сообщения"
+        verbose_name="Получатель сообщения",
+        related_name="notifications"
     )
     is_sent = models.BooleanField(
         verbose_name="Уведомление отправлено?",
