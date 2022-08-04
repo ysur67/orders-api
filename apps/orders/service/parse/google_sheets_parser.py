@@ -111,8 +111,13 @@ class GoogleSheetsParser(BaseParser):
         row_ids = tuple(map(lambda item: item.id, self.rows))
         # remove orders that are not presented in current data
         orders = get_all_orders().exclude(id__in=row_ids)
+        orders_count = orders.count()
         rows_deleted, _ = orders.delete()
-        self.logger.warning("Deleted %s orders from DB", rows_deleted)
+        self.logger.warning(
+            "Deletion of %s orders affected %s rows in DB",
+            orders_count,
+            rows_deleted
+        )
         # reset autoincrement fields to prevent IntegrityErrors from psql.
         reset_autoincrement_fields([Order])
 
