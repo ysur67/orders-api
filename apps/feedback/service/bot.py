@@ -1,6 +1,5 @@
 from typing import Iterable
 
-from apps.feedback.bot.base import BaseBot
 from apps.feedback.bot.telegram_bot import TelegramBot
 from apps.feedback.utils.date import to_message_format
 from apps.orders.models import Order

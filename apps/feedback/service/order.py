@@ -7,7 +7,16 @@ from apps.orders.models import Order
 from django.db.models import QuerySet
 
 
-def get_orders_without_sent_message(receiver_telegram_id: int, date_: date) -> QuerySet[Order]:
+def get_outdated_orders_without_sent_notifications(receiver_telegram_id: int, date_: date) -> QuerySet[Order]:
+    """Get outdated orders for which notifications haven't yet been sent
+
+    Args:
+        receiver_telegram_id (int): User id from Telegram
+        date_ (date): Date limit
+
+    Returns:
+        QuerySet[Order]: QuerySet of orders.
+    """
     qs = Order.objects.filter(
         delivery_date__lte=date_
     )
@@ -21,6 +30,16 @@ def get_orders_without_sent_message(receiver_telegram_id: int, date_: date) -> Q
 
 
 def mark_orders_as_sent(orders: Iterable[Order], telegram_id: int) -> QuerySet[OrderNotification]:
+    """Mark orders as sent for user.
+
+    Args:
+        orders (Iterable[Order]): Orders
+        telegram_id (int): User's ID from Telegram
+
+    Returns:
+        QuerySet[OrderNotification]: QuerySet of created
+        or updated OrderNotifications
+    """
     receiver = get_receiver_by_telegram_id(telegram_id)
     if receiver is None:
         return

@@ -7,8 +7,8 @@ from apps.feedback.bot.utils.message import SingleMessage
 from apps.feedback.models import NotificationsReceiver
 from apps.feedback.service.bot import (build_notification_message,
                                        get_telegram_bot)
-from apps.feedback.service.order import (get_orders_without_sent_message,
-                                         mark_orders_as_sent)
+from apps.feedback.service.order import (
+    get_outdated_orders_without_sent_notifications, mark_orders_as_sent)
 from apps.feedback.service.receivers import get_all_receivers
 from apps.orders.service.parse.google_sheets_parser import GoogleSheetsParser
 from apps.orders.service.repositories.currency_repository.currencies import \
@@ -89,10 +89,13 @@ class ParseOrdersTask(Task):
         bot: BaseBot
     ) -> None:
         now = datetime.now()
-        _get_orders_without_sent_message = await sync_to_async(get_orders_without_sent_message)(receiver.telegram_id,
-                                                                                                date_=now.date())
+        # Get the QuerySet
+        query_set_of_outdated_orders = await sync_to_async(
+            get_outdated_orders_without_sent_notifications
+        )(receiver.telegram_id, date_=now.date())
+        # Evaluate the queryset
         orders_without_notifications = await sync_to_async(list)(
-            _get_orders_without_sent_message
+            query_set_of_outdated_orders
         )
         if len(orders_without_notifications) == 0:
             self.logger.info("There are no orders to send...")
