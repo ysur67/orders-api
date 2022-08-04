@@ -95,6 +95,9 @@ class ParseOrdersTask(Task):
                 date_=now.date()
             )
         )
+        if len(orders_without_notifications) == 0:
+            self.logger.info("There are no orders to send...")
+            return
         text = build_notification_message(orders_without_notifications)
         await bot.send_message(
             SingleMessage(text),

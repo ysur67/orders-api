@@ -4,16 +4,16 @@ from typing import Iterable
 from apps.feedback.models import OrderNotification
 from apps.feedback.service.receivers import get_receiver_by_telegram_id
 from apps.orders.models import Order
-from django.db.models import QuerySet
+from django.db.models import Exists, QuerySet
 
 
-def get_orders_without_sent_message(receiver_id: int, date_: date) -> QuerySet[Order]:
+def get_orders_without_sent_message(receiver_telegram_id: int, date_: date) -> QuerySet[Order]:
     sent_notifications = OrderNotification.objects.filter(
-        receiver__id=receiver_id,
+        receiver__telegram_id__iexact=receiver_telegram_id,
         is_sent=True,
-    ).values('order__id')
-    return Order.objects.exclude(
-        id__in=sent_notifications,
+    ).values_list("id", flat=True)
+    return Order.objects.filter(
+        notifications__id__in=sent_notifications,
         delivery_date__gt=date_
     )
 
