@@ -12,11 +12,10 @@ from apps.orders.service.repositories.currency_repository.currencies import \
 from apps.orders.service.usecases.order import get_all_orders, get_order_by_id
 from apps.orders.utils.convert_utils import (str_to_date, str_to_float,
                                              str_to_int)
-from apps.orders.utils.file_utils import check_if_file_exist, write_in_file
+from apps.orders.utils.file_utils import check_if_file_exist
 from apps.orders.utils.logger import get_default_logger
 from apps.orders.utils.reset_pks import reset_autoincrement_fields
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
+from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
 from .base import BaseParser
@@ -82,20 +81,9 @@ class GoogleSheetsParser(BaseParser):
             raise FileNotFoundError(
                 f"Couldn't find the creds file by path: {absolute_creds_path}"
             )
-        if not check_if_file_exist(absolute_token_path):
-            self.logger.warning(
-                "There is no token.json file by path %s",
-                absolute_token_path
-            )
-            flow = InstalledAppFlow.from_client_secrets_file(
-                absolute_creds_path,
-                self.SCOPES
-            )
-            creds = flow.run_local_server(port=0)
-            write_in_file(self.token_path, creds.to_json())
-        creds = Credentials.from_authorized_user_file(
-            absolute_token_path,
-            self.SCOPES
+        creds = service_account.Credentials.from_service_account_file(
+            absolute_creds_path,
+            scopes=self.SCOPES
         )
         service = build('sheets', 'v4', credentials=creds)
         sheet = service.spreadsheets()
