@@ -11,4 +11,5 @@ def get_default_logger(name: Optional[str] = None) -> logging.Logger:
             fmt='[%(asctime)s:%(levelname)s:%(name)s] %(message)s')
     )
     logger.addHandler(handler)
+    logger.propagate = False
     return logger

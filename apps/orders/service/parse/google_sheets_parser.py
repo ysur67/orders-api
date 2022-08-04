@@ -37,7 +37,7 @@ class GoogleSheetsParser(BaseParser):
 
     SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
     SAMPLE_SPREADSHEET_ID = '1bSjKMCN-7roNe0apm1E8Z8gIwbgeo448ekBWvot66zo'
-    SAMPLE_RANGE_NAME = 'A2:D'
+    SAMPLE_RANGE_NAME = 'A:D'
 
     def __init__(
         self,
@@ -107,7 +107,7 @@ class GoogleSheetsParser(BaseParser):
         assert all(elem is not None for elem in required_fields), \
             f"Some of required fields, ${required_fields} are None, " + \
             "you must call the set_up method first"
-        map(self._parse_single_row, self.rows)
+        list(map(self._parse_single_row, self.rows))
         row_ids = tuple(map(lambda item: item.id, self.rows))
         # remove orders that are not presented in current data
         orders = get_all_orders().exclude(id__in=row_ids)
