@@ -78,6 +78,10 @@ class GoogleSheetsParser(BaseParser):
         absolute_creds_path = self.creds_path.absolute()
         self.logger.info("Got absolute token path %s", absolute_token_path)
         self.logger.info("Got absolute creds path %s", absolute_creds_path)
+        if not check_if_file_exist(absolute_creds_path):
+            raise FileNotFoundError(
+                f"Couldn't find the creds file by path: {absolute_creds_path}"
+            )
         if not check_if_file_exist(absolute_token_path):
             self.logger.warning(
                 "There is no token.json file by path %s",
