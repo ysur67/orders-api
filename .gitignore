@@ -15,5 +15,5 @@ venv
 *.sqlite3
 credentials.json
 token.json
-
 docker-compose.yml
+celerybeat-schedule
