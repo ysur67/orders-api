@@ -33,6 +33,8 @@ DEBUG = env.bool('DEBUG', False)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 
+TELEGRAM_TOKEN = env('TELEGRAM_TOKEN')
+
 
 # Application definition
 
@@ -46,6 +48,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'apps.orders',
+    'apps.feedback',
 ]
 
 MIDDLEWARE = [
@@ -61,6 +64,14 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = env.list("ALLOWED_ORIGINS")
+
+CELERY_BROKER_URL = env('CELERY_BROKER_URL')
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND')
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'json'
+
+CELERY_PARSE_TASK_SCHEDULE = env.int('PARSE_ORDERS_TASK_SCHEDULE', default=60)
 
 ROOT_URLCONF = 'project.urls'
 

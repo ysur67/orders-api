@@ -1,7 +1,9 @@
+import logging
 from datetime import datetime
 from typing import Iterable
 
 import requests
+from apps.orders.utils.logger import get_default_logger
 from lxml import etree
 
 from .base import BaseCurrencyRepository
@@ -29,6 +31,7 @@ class BankOfRussiaCurrencyRepository(BaseCurrencyRepository):
         super().__init__(currency)
         self.url = url
         self.date = date
+        self.logger = get_default_logger("BankOfRussiaCurrencyRepository")
         if self.currency not in self.SUPPORTED_CURRENCIES:
             raise NotImplementedError(
                 f"There is no implementation for currency: {self.currency.name}"
@@ -39,9 +42,18 @@ class BankOfRussiaCurrencyRepository(BaseCurrencyRepository):
             self.url,
             params={"date_req": self.date.strftime("%d/%m/%Y")}
         )
+        self.logger.info(
+            "received response from BankOfRussia API with code: %s",
+            response.status_code
+        )
         if not response.status_code == 200:
             raise BadResponseFromCurrencyAPIException()
         currency_code = currency_to_bank_of_russia_code(self.currency)
+        self.logger.info(
+            "Found currency code: %s. For the currency: %s",
+            currency_code,
+            self.currency
+        )
         return self._get_value_from_response_by_code(response.text, currency_code)
 
     def _get_value_from_response_by_code(self, xml_body: str, currency_code: str) -> float:

@@ -33,6 +33,20 @@ services:
     networks:
       - backend
 
+  celery_beat:
+    build: .
+    command: celery -A project beat
+    volumes:
+      - .:/code
+    links:
+      - redis
+    depends_on:
+      - db
+      - redis
+      - app
+    networks:
+      - backend
+
   celery:
     build: .
     command: celery -A project worker -l info

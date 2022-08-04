@@ -13,6 +13,7 @@ from apps.orders.service.usecases.order import get_all_orders, get_order_by_id
 from apps.orders.utils.convert_utils import (str_to_date, str_to_float,
                                              str_to_int)
 from apps.orders.utils.file_utils import check_if_file_exist, write_in_file
+from apps.orders.utils.logger import get_default_logger
 from apps.orders.utils.reset_pks import reset_autoincrement_fields
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -36,7 +37,7 @@ class GoogleSheetsParser(BaseParser):
 
     SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
     SAMPLE_SPREADSHEET_ID = '1bSjKMCN-7roNe0apm1E8Z8gIwbgeo448ekBWvot66zo'
-    SAMPLE_RANGE_NAME = 'A2:D'
+    SAMPLE_RANGE_NAME = 'A:D'
 
     def __init__(
         self,
@@ -48,6 +49,7 @@ class GoogleSheetsParser(BaseParser):
         self.creds_path = creds_path
         self.token_path = token_path
         self.repository = repository
+        self.logger = get_default_logger("GoogleSheetsParser")
         self.rows: Iterable[GoogleSheetRow] = None
         self.rubles_per_dollar: float = None
         assert self.repository.currency == Currency.DOLLAR, \
@@ -60,12 +62,27 @@ class GoogleSheetsParser(BaseParser):
 
     def _fetch_current_rubles_course(self) -> None:
         """Get the number of rubles per dollar"""
-        self.rubles_per_dollar = self.repository.get_amount_of_rubles_per_currency()
+        self.rubles_per_dollar = round(
+            self.repository.get_amount_of_rubles_per_currency(),
+            2
+        )
+        self.logger.info(
+            "Got %s rubles for currency %s, from %s",
+            self.rubles_per_dollar,
+            self.repository.currency,
+            type(self.repository)
+        )
 
     def _fetch_rows_from_google_sheets(self) -> None:
         absolute_token_path = self.token_path.absolute()
         absolute_creds_path = self.creds_path.absolute()
+        self.logger.info("Got absolute token path %s", absolute_token_path)
+        self.logger.info("Got absolute creds path %s", absolute_creds_path)
         if not check_if_file_exist(absolute_token_path):
+            self.logger.warning(
+                "There is no token.json file by path %s",
+                absolute_token_path
+            )
             flow = InstalledAppFlow.from_client_secrets_file(
                 absolute_creds_path,
                 self.SCOPES
@@ -93,11 +110,17 @@ class GoogleSheetsParser(BaseParser):
         assert all(elem is not None for elem in required_fields), \
             f"Some of required fields, ${required_fields} are None, " + \
             "you must call the set_up method first"
-        map(self._parse_single_row, self.rows)
+        list(map(self._parse_single_row, self.rows))
         row_ids = tuple(map(lambda item: item.id, self.rows))
         # remove orders that are not presented in current data
         orders = get_all_orders().exclude(id__in=row_ids)
-        orders.delete()
+        orders_count = orders.count()
+        rows_deleted, _ = orders.delete()
+        self.logger.warning(
+            "Deletion of %s orders affected %s rows in DB",
+            orders_count,
+            rows_deleted
+        )
         # reset autoincrement fields to prevent IntegrityErrors from psql.
         reset_autoincrement_fields([Order])
 
@@ -106,11 +129,13 @@ class GoogleSheetsParser(BaseParser):
         return self._create_order(row) if order is None else self._update_order(order, row)
 
     def _create_order(self, row: GoogleSheetRow) -> Order:
+        self.logger.info("Creating order from row: %s", row)
         result = map_row_to_model(row)
         result.save()
         return result
 
     def _update_order(self, order: Order, row: GoogleSheetRow) -> Order:
+        self.logger.info("Updating order from row: %s", row)
         order.order_id = row.order_id
         order.cost_dollars = row.cost_dollars
         order.cost_rubles = row.cost_rubles
@@ -141,7 +166,7 @@ def map_data_to_row(data: Iterable[Any], rubles_per_dollar: float) -> GoogleShee
         id=id_,
         order_id=order_id,
         cost_dollars=cost_in_dollars,
-        cost_rubles=cost_in_dollars * rubles_per_dollar,
+        cost_rubles=round(cost_in_dollars * rubles_per_dollar, 2),
         delivery_date=delivery_date
     )
 
