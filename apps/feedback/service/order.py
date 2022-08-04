@@ -24,7 +24,7 @@ def get_outdated_orders_without_sent_notifications(receiver_telegram_id: int, da
         receiver__telegram_id__iexact=receiver_telegram_id,
         is_sent=True,
     ).values_list("id", flat=True)
-    if sent_notifications.count() != 0:
+    if sent_notifications.exists():
         qs = qs.exclude(notifications__id__in=sent_notifications)
     return qs
 
