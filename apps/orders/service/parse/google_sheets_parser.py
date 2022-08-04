@@ -62,7 +62,10 @@ class GoogleSheetsParser(BaseParser):
 
     def _fetch_current_rubles_course(self) -> None:
         """Get the number of rubles per dollar"""
-        self.rubles_per_dollar = self.repository.get_amount_of_rubles_per_currency()
+        self.rubles_per_dollar = round(
+            self.repository.get_amount_of_rubles_per_currency(),
+            2
+        )
         self.logger.info(
             "Got %s rubles for currency %s, from %s",
             self.rubles_per_dollar,
@@ -163,7 +166,7 @@ def map_data_to_row(data: Iterable[Any], rubles_per_dollar: float) -> GoogleShee
         id=id_,
         order_id=order_id,
         cost_dollars=cost_in_dollars,
-        cost_rubles=cost_in_dollars * rubles_per_dollar,
+        cost_rubles=round(cost_in_dollars * rubles_per_dollar, 2),
         delivery_date=delivery_date
     )
 
