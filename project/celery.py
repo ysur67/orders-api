@@ -1,5 +1,7 @@
 import os
 
+from django.conf import settings
+
 from celery import Celery
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
@@ -12,7 +14,7 @@ app.conf.update(
     beat_schedule={
         'parse_orders_every_minute': {
             'task': 'apps.orders.tasks.ParseOrdersTask',
-            'schedule': 60,
+            'schedule': settings.CELERY_PARSE_TASK_SCHEDULE,
         },
     },
 )

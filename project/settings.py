@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'apps.orders',
+    'apps.feedback',
 ]
 
 MIDDLEWARE = [
@@ -68,6 +69,7 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
 
+CELERY_PARSE_TASK_SCHEDULE = env.int('PARSE_ORDERS_TASK_SCHEDULE', default=60)
 
 ROOT_URLCONF = 'project.urls'
 
