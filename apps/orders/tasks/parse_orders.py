@@ -67,8 +67,7 @@ class ParseOrdersTask(Task):
             self.logger.error(
                 "Not implemented error occurred. " +
                 "Are you sure you used the correct currencies? " +
-                "Error message: %s",
-                not_implemented_error
+                "Error message: %s", not_implemented_error
             )
         except (
             BadResponseFromCurrencyAPIException,
