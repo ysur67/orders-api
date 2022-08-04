@@ -61,6 +61,8 @@ class ParseOrdersTask(Task):
                 "Connection error occurred: %s",
                 connection_error
             )
+        except FileNotFoundError as file_not_found_error:
+            self.logger.error(str(file_not_found_error))
         except NotImplementedError as not_implemented_error:
             self.logger.error(
                 "Not implemented error occurred. " +
