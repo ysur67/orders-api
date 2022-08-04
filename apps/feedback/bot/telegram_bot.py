@@ -30,7 +30,11 @@ class TelegramBot(BaseBot):
 
     async def close(self) -> None:
         """Close the bot connection."""
-        return self.bot.close()
+        await self.bot.close()
+        session = await self.bot.get_session()
+        if session is None:
+            return
+        await session.close()
 
     def require_bot(self) -> None:
         """Require calls to be executed inside bot context.
