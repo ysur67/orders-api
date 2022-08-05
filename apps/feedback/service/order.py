@@ -7,7 +7,10 @@ from apps.orders.models import Order
 from django.db.models import QuerySet
 
 
-def get_outdated_orders_without_sent_notifications(receiver_telegram_id: int, date_: date) -> QuerySet[Order]:
+def get_outdated_orders_without_sent_notifications(
+    receiver_telegram_id: int,
+    date_: date
+) -> QuerySet[Order]:
     """Get outdated orders for which notifications haven't yet been sent
 
     Args:
@@ -42,7 +45,7 @@ def mark_orders_as_sent(orders: Iterable[Order], telegram_id: int) -> QuerySet[O
     """
     receiver = get_receiver_by_telegram_id(telegram_id)
     if receiver is None:
-        return
+        return OrderNotification.objects.none()
     existing_records: QuerySet[OrderNotification] = OrderNotification.objects.filter(
         order__in=orders,
         receiver=receiver,

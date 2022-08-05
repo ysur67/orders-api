@@ -4,7 +4,7 @@ from apps.orders.service.repositories.currency_repository.currencies import \
     Currency
 
 
-class BaseCurrencyRepository(ABC):
+class BaseCurrencyToRublesRepository(ABC):
     """Abstract class for receiving the ruble exchange rate
     relative to currencies.
     """

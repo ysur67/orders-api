@@ -5,7 +5,7 @@ from apps.orders.service.parse.google_sheets_parser import GoogleSheetsParser
 from apps.orders.service.repositories.currency_repository.currencies import \
     Currency
 from apps.orders.service.repositories.currency_repository.repository import \
-    BankOfRussiaCurrencyRepository
+    BankOfRussiaCurrencyToRublesRepository
 from django.conf import settings
 from django.core.management import BaseCommand
 
@@ -13,7 +13,7 @@ from django.core.management import BaseCommand
 class Command(BaseCommand):
 
     def handle(self, *args: Any, **options: Any) -> Optional[str]:
-        repository = BankOfRussiaCurrencyRepository(
+        repository = BankOfRussiaCurrencyToRublesRepository(
             currency=Currency.DOLLAR,
             url="https://www.cbr.ru/scripts/XML_daily.asp",
             date=datetime.now(),

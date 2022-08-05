@@ -17,7 +17,7 @@ from apps.orders.service.repositories.currency_repository.exceptions import (
     BadResponseFromCurrencyAPIException, MultipleCurrenciesInResponseException,
     NoSuchCurrencyInResponseException)
 from apps.orders.service.repositories.currency_repository.repository import \
-    BankOfRussiaCurrencyRepository
+    BankOfRussiaCurrencyToRublesRepository
 from apps.orders.utils.logger import get_default_logger
 from asgiref.sync import sync_to_async
 from celery import Task
@@ -44,7 +44,7 @@ class ParseOrdersTask(Task):
     def run_parser(self) -> None:
         self.logger.info("Launching the parser...")
         try:
-            repository = BankOfRussiaCurrencyRepository(
+            repository = BankOfRussiaCurrencyToRublesRepository(
                 currency=Currency.DOLLAR,
                 url="https://www.cbr.ru/scripts/XML_daily.asp",
                 date=datetime.now(),
