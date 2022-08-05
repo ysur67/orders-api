@@ -6,7 +6,7 @@ from typing import Any, Iterable
 
 from apps.orders.models import Order
 from apps.orders.service.repositories.currency_repository.base import \
-    BaseCurrencyRepository
+    BaseCurrencyToRublesRepository
 from apps.orders.service.repositories.currency_repository.currencies import \
     Currency
 from apps.orders.service.usecases.order import get_all_orders, get_order_by_id
@@ -42,7 +42,7 @@ class GoogleSheetsParser(BaseParser):
         self,
         creds_path: Path,
         token_path: Path,
-        repository: BaseCurrencyRepository
+        repository: BaseCurrencyToRublesRepository
     ) -> None:
         super().__init__()
         self.creds_path = creds_path

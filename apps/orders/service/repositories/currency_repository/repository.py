@@ -6,14 +6,14 @@ import requests
 from apps.orders.utils.logger import get_default_logger
 from lxml import etree
 
-from .base import BaseCurrencyRepository
+from .base import BaseCurrencyToRublesRepository
 from .currencies import Currency
 from .exceptions import (BadResponseFromCurrencyAPIException,
                          MultipleCurrenciesInResponseException,
                          NoSuchCurrencyInResponseException)
 
 
-class BankOfRussiaCurrencyRepository(BaseCurrencyRepository):
+class BankOfRussiaCurrencyToRublesRepository(BaseCurrencyToRublesRepository):
     """The Bank of Russia repository for receiving the ruble exchange rate
     relative to currencies.
     """
